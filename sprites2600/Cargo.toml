@@ -1,0 +1,22 @@
+[package]
+name = "sprites2600"
+version = "0.1.0"
+edition = "2021"
+authors = ["Bruno STEUX <bruno.steux@gmail.com>"]
+license = "GPL-3.0-or-later"
+description = "a companion tool of cc2600 generating C sprites"
+readme = "README.md"
+homepage = "https://github.com/steux/tools2600"
+repository = "https://github.com/steux/tools2600"
+keywords = ["cli", "gamedev"]
+categories = ["command-line-utilities", "game-development"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+clap_derive = "4"
+image = "0.24"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+anyhow = "1.0"
