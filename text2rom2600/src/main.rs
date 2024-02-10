@@ -31,7 +31,8 @@ fn read_font() -> Result<Font>
             for x in 0..3 {
                 ch[y] <<= 1;
                 let v = font_image.get_pixel(xp + x, yp + y as u32);
-                if v[3] != 255 {
+                //debug!("x={x} y={y} v={:?}", v);
+                if v[3] != 0 {
                     ch[y] |= 1;
                 }
             }
@@ -69,14 +70,17 @@ fn main() -> Result<()> {
                 return Err(anyhow!("Unknown character {c} on line {line}"));
             }
         }
+        if ln % (256 / v.len()) == 0 {
+            print!("aligned(256) ");
+        } 
         print!("const char line{ln}[{}] = {{\n\t", v.len());
         for i in 0..v.len() - 1 {
-            print!("{}, ", v[i]);
+            print!("0x{:02x}, ", v[i]);
             if ((i + 1) % 7) == 0 {
                 print!("\n\t");
             }
         }
-        println!("{}}};", v.last().unwrap());
+        println!("0x{:02x}}};", v.last().unwrap());
     }
     Ok(())
 }
