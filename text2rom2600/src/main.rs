@@ -61,9 +61,9 @@ fn main() -> Result<()> {
             if let Some(def) = font.get(&c) {
                 for y in 0..7 {
                     if i & 1 != 0 {
-                        v[(i / 2) * 7 + y] |= def[y]
+                        v[(i / 2) * 7 + (6 - y)] |= def[y]
                     } else {
-                        v[(i / 2) * 7 + y] = def[y] << 4;
+                        v[(i / 2) * 7 + (6 - y)] = def[y] << 4;
                     }
                 }
             } else {
