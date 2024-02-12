@@ -170,6 +170,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let contents = fs::read_to_string(args.filename).expect("Unable to read input file");
     let all_sprites: AllSprites = serde_yaml::from_str(&contents)?;
+    let mut sprites = Vec::<(String, u8)>::new(); 
     for sprite_sheet in all_sprites.sprite_sheets {
         let img = image::open(&sprite_sheet.image).expect(&format!("Can't open image {}", sprite_sheet.image));
 
@@ -206,14 +207,9 @@ fn main() -> Result<()> {
                 colors.push(cx.unwrap_or(0));
             }
             // Whoaw. We do have our pixels vector. Let's output it
-            print!("const char {}_gfx[{}] = {{0, 0, \n\t", sprite.name, gfx.len() + 4);
+            print!("MS_KERNEL_BANK const char {}_gfx[{}] = {{0, 0, ", sprite.name, gfx.len() + 4);
             for c in 0..gfx.len() {
-                print!("0x{:02x}", gfx[c]);
-                if (c + 1) % 16 != 0 {
-                    print!(", ");
-                } else {
-                    print!(",\n\t");
-                }
+                print!("0x{:02x}, ", gfx[c]);
             } 
             println!("0, 0}};");
             // Check if colors contain different values
@@ -221,21 +217,33 @@ fn main() -> Result<()> {
             cs.sort();
             cs.dedup();
             if cs.len() > 1 {
-                print!("const char {}_colors[{}] = {{0, 0, \n\t", sprite.name, colors.len() + 2);
-                let mut c = 0;
-                for _ in 0..colors.len() - 1 {
-                    print!("0x{:02x}", colors[c]);
-                    if (c + 1) % 16 != 0 {
-                        print!(", ");
-                    } else {
-                        print!(",\n\t");
-                    }
-                    c += 1;
+                print!("MS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
+                for c in 0..colors.len() - 1 {
+                    print!("0x{:02x}, ", colors[c]);
                 } 
-                println!("0x{:02x}}}", colors[c]);
+                println!("0x{:02x}}}", colors.last().unwrap());
             }
+            sprites.push((sprite.name.clone(), gfx.len() as u8));
         }
     } 
-
+    println!("#define MS_NB_SPRITES_DEF {}", sprites.len());
+    print!("MS_KERNEL_BANK const char *ms_grptr[MS_NB_SPRITES_DEF] = {{");
+    for (c, x) in sprites.iter().enumerate() {
+        if c != 0 { print!(", "); }
+        print!("{}_gfx", x.0);
+    }
+    println!("}};");
+    print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
+    for (c, x) in sprites.iter().enumerate() {
+        if c != 0 { print!(", "); }
+        print!("{}_colors", x.0);
+    }
+    println!("}};");
+    print!("MS_KERNEL_BANK const char ms_height[MS_NB_SPRITES_DEF] = {{");
+    for (c, x) in sprites.iter().enumerate() {
+        if c != 0 { print!(", "); }
+        print!("{}", x.1 + 3);
+    }
+    println!("}};");
     Ok(())
 }

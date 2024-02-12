@@ -1,0 +1,13 @@
+sprite_sheets:
+  - image: shmup.png
+    sprites:
+      - name: spaceship 
+        top: 0
+        left: 0
+        height: 16
+      - name: spaceship_exhaust
+        top: 0
+        left: 0
+        height: 24
+
+
