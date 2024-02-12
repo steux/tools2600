@@ -5,6 +5,7 @@ sprite_sheets:
         top: 0
         left: 0
         height: 16
+        color_copy: spaceship_exhaust
       - name: spaceship_exhaust
         top: 0
         left: 0

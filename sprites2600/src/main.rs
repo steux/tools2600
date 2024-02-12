@@ -30,6 +30,8 @@ struct Sprite {
     top: u32,
     left: u32,
     height: u32,
+    #[serde(default)]
+    color_copy: Option<String>,
     #[serde(default = "default_pixel_width")]
     pixel_width: u8
 }
@@ -170,7 +172,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let contents = fs::read_to_string(args.filename).expect("Unable to read input file");
     let all_sprites: AllSprites = serde_yaml::from_str(&contents)?;
-    let mut sprites = Vec::<(String, u8)>::new(); 
+    let mut sprites = Vec::<(String, String, u8)>::new(); 
     for sprite_sheet in all_sprites.sprite_sheets {
         let img = image::open(&sprite_sheet.image).expect(&format!("Can't open image {}", sprite_sheet.image));
 
@@ -212,18 +214,22 @@ fn main() -> Result<()> {
                 print!("0x{:02x}, ", gfx[c]);
             } 
             println!("0, 0}};");
-            // Check if colors contain different values
-            let mut cs = colors.clone();
-            cs.sort();
-            cs.dedup();
-            if cs.len() > 1 {
-                print!("MS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
-                for c in 0..colors.len() - 1 {
-                    print!("0x{:02x}, ", colors[c]);
-                } 
-                println!("0x{:02x}}}", colors.last().unwrap());
+            if let Some(s) = &sprite.color_copy {
+                sprites.push((sprite.name.clone(), s.clone(), gfx.len() as u8));
+            } else {
+                // Check if colors contain different values
+                let mut cs = colors.clone();
+                cs.sort();
+                cs.dedup();
+                if cs.len() > 1 {
+                    print!("MS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
+                    for c in 0..colors.len() - 1 {
+                        print!("0x{:02x}, ", colors[c]);
+                    } 
+                    println!("0x{:02x}}}", colors.last().unwrap());
+                }
+                sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8));
             }
-            sprites.push((sprite.name.clone(), gfx.len() as u8));
         }
     } 
     println!("#define MS_NB_SPRITES_DEF {}", sprites.len());
@@ -236,14 +242,17 @@ fn main() -> Result<()> {
     print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
     for (c, x) in sprites.iter().enumerate() {
         if c != 0 { print!(", "); }
-        print!("{}_colors", x.0);
+        print!("{}_colors", x.1);
     }
     println!("}};");
     print!("MS_KERNEL_BANK const char ms_height[MS_NB_SPRITES_DEF] = {{");
     for (c, x) in sprites.iter().enumerate() {
         if c != 0 { print!(", "); }
-        print!("{}", x.1 + 3);
+        print!("{}", x.2 + 3);
     }
     println!("}};");
+    for (c, x) in sprites.iter().enumerate() {
+        println!("#define SPRITE_{} {}", x.0.to_uppercase(), c);
+    }
     Ok(())
 }
