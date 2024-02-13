@@ -188,7 +188,7 @@ fn main() -> Result<()> {
                     current_byte <<= 1;
                     let color = img.get_pixel(sprite.left + x * sprite.pixel_width as u32, sprite.top + y);
                     // Find the color in the Atari 2600 color palette
-                    if color[3] != 0 && (color[0] != 0 || color[1] != 0 || color[2] != 0) {
+                    if color[3] != 0 {
                         // Find the color in the VCS palette
                         for c in 0..128 {
                             if color[0] == PALETTE[c * 5] && color[1] == PALETTE[c * 5 + 1] && color[2] == PALETTE[c * 5 + 2] {

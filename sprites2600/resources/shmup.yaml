@@ -10,5 +10,41 @@ sprite_sheets:
         top: 0
         left: 0
         height: 24
+      - name: letter_g
+        top: 0
+        left: 8
+        height: 16
+        color_copy: spaceship_exhaust
+      - name: letter_a
+        top: 0
+        left: 16 
+        height: 16
+        color_copy: spaceship_exhaust
+      - name: letter_m
+        top: 0
+        left: 24
+        height: 16
+        color_copy: spaceship_exhaust
+      - name: letter_e
+        top: 0
+        left: 32
+        height: 16
+        color_copy: spaceship_exhaust
+      - name: letter_o
+        top: 0
+        left: 40
+        height: 16
+        color_copy: spaceship_exhaust
+      - name: letter_v
+        top: 0
+        left: 48
+        height: 16
+        color_copy: spaceship_exhaust
+      - name: letter_r
+        top: 0
+        left: 56
+        height: 16
+        color_copy: spaceship_exhaust
+
 
 
