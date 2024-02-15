@@ -170,6 +170,8 @@ const VCS_NTSC_PALETTE: [u8; 128 * 5] = [
 232,204,124,15, 12,
 252,224,140,15, 14];
 
+const TO_PAL: [u8;16] = [0, 2, 4, 4, 6, 8, 10, 12, 13, 11, 9, 7, 5, 3, 2, 2];
+
 fn main() -> Result<()> {
     let args = Args::parse();
     let contents = fs::read_to_string(args.filename).expect("Unable to read input file");
@@ -224,11 +226,17 @@ fn main() -> Result<()> {
                 cs.sort();
                 cs.dedup();
                 if cs.len() > 1 {
-                    print!("MS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
+                    print!("#ifdef PAL\nMS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
+                    for c in 0..colors.len() - 1 {
+                        let color = (TO_PAL[(colors[c] >> 4) as usize] << 4) | (colors[c] & 0x0f);
+                        print!("0x{:02x}, ", color);
+                    } 
+                    println!("0x{:02x}}};", colors.last().unwrap());
+                    print!("#else\nMS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
                     for c in 0..colors.len() - 1 {
                         print!("0x{:02x}, ", colors[c]);
                     } 
-                    println!("0x{:02x}}};", colors.last().unwrap());
+                    println!("0x{:02x}}};\n#endif", colors.last().unwrap());
                 }
                 sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8, sprite.color_offset));
             }
