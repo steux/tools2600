@@ -10,6 +10,51 @@ sprite_sheets:
         top: 0
         left: 0
         height: 24
+      - name: fire
+        top: 0
+        left: 64
+        height: 9
+        color_copy: spaceship_exhaust
+        color_offset: 15
+      - name: bullet
+        top: 9
+        left: 64
+        height: 9
+        color_copy: spaceship_exhaust
+        color_offset: 15
+      - name: explosion1
+        top: 0
+        left: 80
+        height: 9
+        color_copy: explosion3
+      - name: explosion2
+        top: 0
+        left: 88
+        height: 11 
+        color_copy: explosion3
+      - name: explosion3
+        top: 0
+        left: 96 
+        height: 12 
+      - name: explosion4
+        top: 0
+        left: 104
+        height: 12 
+        color_copy: explosion3
+      - name: explosion5
+        top: 0
+        left: 112
+        height: 12 
+        color_copy: explosion3
+      - name: enemy1 
+        top: 0
+        left: 72
+        height: 16
+      - name: bigboss
+        top: 24
+        left: 0
+        height: 32
+        pixel_width: 2
       - name: letter_g
         top: 0
         left: 8

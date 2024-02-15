@@ -32,13 +32,15 @@ struct Sprite {
     height: u32,
     #[serde(default)]
     color_copy: Option<String>,
+    #[serde(default)]
+    color_offset: Option<u8>,
     #[serde(default = "default_pixel_width")]
     pixel_width: u8
 }
 
 fn default_pixel_width() -> u8 { 1 }
 
-const PALETTE: [u8; 128 * 5] = [
+const VCS_NTSC_PALETTE: [u8; 128 * 5] = [
   0,  0,  0,0, 0,
  64, 64, 64,0, 2,
 108,108,108,0, 4,
@@ -172,7 +174,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
     let contents = fs::read_to_string(args.filename).expect("Unable to read input file");
     let all_sprites: AllSprites = serde_yaml::from_str(&contents)?;
-    let mut sprites = Vec::<(String, String, u8)>::new(); 
+    let mut sprites = Vec::<(String, String, u8, Option<u8>)>::new(); 
     for sprite_sheet in all_sprites.sprite_sheets {
         let img = image::open(&sprite_sheet.image).expect(&format!("Can't open image {}", sprite_sheet.image));
 
@@ -191,8 +193,8 @@ fn main() -> Result<()> {
                     if color[3] != 0 {
                         // Find the color in the VCS palette
                         for c in 0..128 {
-                            if color[0] == PALETTE[c * 5] && color[1] == PALETTE[c * 5 + 1] && color[2] == PALETTE[c * 5 + 2] {
-                                let cxx = (PALETTE[c * 5 + 3] << 4) | PALETTE[c * 5 + 4];
+                            if color[0] == VCS_NTSC_PALETTE[c * 5] && color[1] == VCS_NTSC_PALETTE[c * 5 + 1] && color[2] == VCS_NTSC_PALETTE[c * 5 + 2] {
+                                let cxx = (VCS_NTSC_PALETTE[c * 5 + 3] << 4) | VCS_NTSC_PALETTE[c * 5 + 4];
                                 if let Some(cxxx) = cx {
                                     if cxxx != cxx {
                                         return Err(anyhow!("Second color found on line {y} of sprite {}", sprite.name));
@@ -215,7 +217,7 @@ fn main() -> Result<()> {
             } 
             println!("0, 0}};");
             if let Some(s) = &sprite.color_copy {
-                sprites.push((sprite.name.clone(), s.clone(), gfx.len() as u8));
+                sprites.push((sprite.name.clone(), s.clone(), gfx.len() as u8, sprite.color_offset));
             } else {
                 // Check if colors contain different values
                 let mut cs = colors.clone();
@@ -226,9 +228,9 @@ fn main() -> Result<()> {
                     for c in 0..colors.len() - 1 {
                         print!("0x{:02x}, ", colors[c]);
                     } 
-                    println!("0x{:02x}}}", colors.last().unwrap());
+                    println!("0x{:02x}}};", colors.last().unwrap());
                 }
-                sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8));
+                sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8, sprite.color_offset));
             }
         }
     } 
@@ -242,7 +244,11 @@ fn main() -> Result<()> {
     print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
     for (c, x) in sprites.iter().enumerate() {
         if c != 0 { print!(", "); }
-        print!("{}_colors", x.1);
+        if let Some(offset) = x.3 {
+            print!("{}_colors + {offset}", x.1);
+        } else {
+            print!("{}_colors", x.1);
+        }
     }
     println!("}};");
     print!("MS_KERNEL_BANK const char ms_height[MS_NB_SPRITES_DEF] = {{");
