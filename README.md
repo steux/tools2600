@@ -1,6 +1,7 @@
 # sprites2600
 
 _sprites2600_ is a tool (written in Rust) designed to generate C code for sprites to be displayed by cc2600 multisprite engine. 
+
 ![image](https://github.com/steux/tools2600/assets/22678486/0b67b974-b2db-44db-970d-6210d250bd6c)
 
 _sprites2600_ processes a YAML file that describes all the sprites to be generated (associated to .png spritesheets). For instance, for the picture above (some shmup sprites - drawn with GIMP), the YAML file is :
