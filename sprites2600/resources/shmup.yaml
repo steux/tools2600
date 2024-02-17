@@ -20,8 +20,6 @@ sprite_sheets:
         top: 9
         left: 64
         height: 9
-        color_copy: spaceship_exhaust
-        color_offset: 15
       - name: explosion1
         top: 0
         left: 80
