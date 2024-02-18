@@ -1,0 +1,58 @@
+sprite_sheets:
+  - image: cars.png
+    sprites:
+      - name: car0 
+        top: 12
+        left: 48
+        height: 12
+      - name: car1 
+        top: 12
+        left: 40
+        height: 12
+      - name: car2 
+        top: 12
+        left: 32 
+        height: 12
+      - name: car3 
+        top: 13
+        left: 24
+        height: 11
+      - name: car4 
+        top: 13
+        left: 16
+        height: 10
+      - name: car5 
+        top: 14
+        left: 8
+        height: 8
+      - name: car6 
+        top: 2
+        left: 0
+        height: 8
+      - name: car7 
+        top: 2
+        left: 8
+        height: 8
+      - name: car8 
+        top: 1
+        left: 16 
+        height: 10
+      - name: car9 
+        top: 0
+        left: 24
+        height: 11
+      - name: car10 
+        top: 0
+        left: 32
+        height: 12
+      - name: car11 
+        top: 0
+        left: 40
+        height: 12
+      - name: car12 
+        top: 0
+        left: 48
+        height: 12
+
+
+
