@@ -1,0 +1,3 @@
+v0.2 (02/18/2024) :
+	- added aligned(256) to the array of gfx.
+	- removed colors when sprites are one color only

@@ -177,6 +177,7 @@ fn main() -> Result<()> {
     let contents = fs::read_to_string(args.filename).expect("Unable to read input file");
     let all_sprites: AllSprites = serde_yaml::from_str(&contents)?;
     let mut sprites = Vec::<(String, String, u8, Option<u8>)>::new(); 
+    let mut one_color_sprites = true;
     for sprite_sheet in all_sprites.sprite_sheets {
         let img = image::open(&sprite_sheet.image).expect(&format!("Can't open image {}", sprite_sheet.image));
 
@@ -237,28 +238,31 @@ fn main() -> Result<()> {
                         print!("0x{:02x}, ", colors[c]);
                     } 
                     println!("0x{:02x}}};\n#endif", colors.last().unwrap());
+                    one_color_sprites = false;
                 }
                 sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8, sprite.color_offset));
             }
         }
     } 
     println!("#define MS_NB_SPRITES_DEF {}", sprites.len());
-    print!("MS_KERNEL_BANK const char *ms_grptr[MS_NB_SPRITES_DEF] = {{");
+    print!("MS_KERNEL_BANK aligned(256) const char *ms_grptr[MS_NB_SPRITES_DEF] = {{");
     for (c, x) in sprites.iter().enumerate() {
         if c != 0 { print!(", "); }
         print!("{}_gfx", x.0);
     }
     println!("}};");
-    print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
-    for (c, x) in sprites.iter().enumerate() {
-        if c != 0 { print!(", "); }
-        if let Some(offset) = x.3 {
-            print!("{}_colors + {offset}", x.1);
-        } else {
-            print!("{}_colors", x.1);
+    if !one_color_sprites {
+        print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
+        for (c, x) in sprites.iter().enumerate() {
+            if c != 0 { print!(", "); }
+            if let Some(offset) = x.3 {
+                print!("{}_colors + {offset}", x.1);
+            } else {
+                print!("{}_colors", x.1);
+            }
         }
+        println!("}};");
     }
-    println!("}};");
     print!("MS_KERNEL_BANK const char ms_height[MS_NB_SPRITES_DEF] = {{");
     for (c, x) in sprites.iter().enumerate() {
         if c != 0 { print!(", "); }
