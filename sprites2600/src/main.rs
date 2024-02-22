@@ -9,7 +9,16 @@ use anyhow::{anyhow, Result};
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// YAML input file
-    filename: String
+    filename: String,
+    /// Generate code for multisprite lib
+    #[clap(long, short, action)]
+    multisprite: bool,
+    /// Generate raw sprite arrays
+    #[clap(long, short, action)]
+    raw: bool,
+    /// Generate reversed raw sprite array
+    #[clap(long, short, action)]
+    reversed: bool
 }
 
 #[derive(Debug, Deserialize)]
@@ -172,8 +181,32 @@ const VCS_NTSC_PALETTE: [u8; 128 * 5] = [
 
 const TO_PAL: [u8;16] = [0, 2, 4, 4, 6, 8, 10, 12, 13, 11, 9, 7, 5, 3, 2, 2];
 
+#[derive(PartialEq)]
+enum Mode {
+    Multisprite,
+    Raw,
+    Reversed
+}
+
 fn main() -> Result<()> {
     let args = Args::parse();
+    let mode = if args.multisprite {
+        if args.raw || args.reversed {
+            return Err(anyhow!("multisprite, raw and reversed flags are exclusive"));
+        }
+        Mode::Multisprite
+    } else if args.raw {
+        if args.raw || args.reversed {
+            return Err(anyhow!("multisprite, raw and reversed flags are exclusive"));
+        }
+        Mode::Raw
+    } else if args.raw {
+        if args.multisprite || args.reversed {
+            return Err(anyhow!("multisprite, raw and reversed flags are exclusive"));
+        }
+        Mode::Reversed
+    } else { Mode::Multisprite };
+
     let contents = fs::read_to_string(args.filename).expect("Unable to read input file");
     let all_sprites: AllSprites = serde_yaml::from_str(&contents)?;
     let mut sprites = Vec::<(String, String, u8, Option<u8>)>::new(); 
@@ -213,64 +246,125 @@ fn main() -> Result<()> {
                 gfx.push(current_byte);
                 colors.push(cx.unwrap_or(0));
             }
-            // Whoaw. We do have our pixels vector. Let's output it
-            print!("MS_KERNEL_BANK const char {}_gfx[{}] = {{0, 0, ", sprite.name, gfx.len() + 4);
-            for c in 0..gfx.len() {
-                print!("0x{:02x}, ", gfx[c]);
-            } 
-            println!("0, 0}};");
-            if let Some(s) = &sprite.color_copy {
-                sprites.push((sprite.name.clone(), s.clone(), gfx.len() as u8, sprite.color_offset));
-            } else {
-                // Check if colors contain different values
-                let mut cs = colors.clone();
-                cs.sort();
-                cs.dedup();
-                if cs.len() > 1 {
-                    print!("#ifdef PAL\nMS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
-                    for c in 0..colors.len() - 1 {
-                        let color = (TO_PAL[(colors[c] >> 4) as usize] << 4) | (colors[c] & 0x0f);
-                        print!("0x{:02x}, ", color);
+            match mode {
+                Mode::Multisprite => {
+                    // Whoaw. We do have our pixels vector. Let's output it
+                    print!("MS_KERNEL_BANK const char {}_gfx[{}] = {{0, 0, ", sprite.name, gfx.len() + 4);
+                    for c in 0..gfx.len() {
+                        print!("0x{:02x}, ", gfx[c]);
                     } 
-                    println!("0x{:02x}}};", colors.last().unwrap());
-                    print!("#else\nMS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
-                    for c in 0..colors.len() - 1 {
-                        print!("0x{:02x}, ", colors[c]);
+                    println!("0, 0}};");
+                    if let Some(s) = &sprite.color_copy {
+                        sprites.push((sprite.name.clone(), s.clone(), gfx.len() as u8, sprite.color_offset));
+                    } else {
+                        // Check if colors contain different values
+                        let mut cs = colors.clone();
+                        cs.sort();
+                        cs.dedup();
+                        if cs.len() > 1 {
+                            print!("#ifdef PAL\nMS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
+                            for c in 0..colors.len() - 1 {
+                                let color = (TO_PAL[(colors[c] >> 4) as usize] << 4) | (colors[c] & 0x0f);
+                                print!("0x{:02x}, ", color);
+                            } 
+                            println!("0x{:02x}}};", colors.last().unwrap());
+                            print!("#else\nMS_KERNEL_BANK const char {}_colors[{}] = {{0, 0, ", sprite.name, colors.len() + 2);
+                            for c in 0..colors.len() - 1 {
+                                print!("0x{:02x}, ", colors[c]);
+                            } 
+                            println!("0x{:02x}}};\n#endif", colors.last().unwrap());
+                            one_color_sprites = false;
+                        }
+                        sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8, sprite.color_offset));
+                    }
+                },
+                Mode::Raw => {
+                    print!("const char {}_gfx[{}] = {{", sprite.name, gfx.len());
+                    for c in 0..gfx.len() - 1 {
+                        print!("0x{:02x}, ", gfx[c]);
                     } 
-                    println!("0x{:02x}}};\n#endif", colors.last().unwrap());
-                    one_color_sprites = false;
+                    println!("0x{:02x}}};\n", gfx.last().unwrap());
+                    if sprite.color_copy.is_none() {
+                        // Check if colors contain different values
+                        let mut cs = colors.clone();
+                        cs.sort();
+                        cs.dedup();
+                        if cs.len() > 1 {
+                            print!("#ifdef PAL\nconst char {}_colors[{}] = {{", sprite.name, colors.len());
+                            for c in 0..colors.len() - 1 {
+                                let color = (TO_PAL[(colors[c] >> 4) as usize] << 4) | (colors[c] & 0x0f);
+                                print!("0x{:02x}, ", color);
+                            } 
+                            println!("0x{:02x}}};", colors.last().unwrap());
+                            print!("#else\nconst char {}_colors[{}] = {{", sprite.name, colors.len());
+                            for c in 0..colors.len() - 1 {
+                                print!("0x{:02x}, ", colors[c]);
+                            } 
+                            println!("0x{:02x}}};\n#endif", colors.last().unwrap());
+                        }
+                    }
+                },
+                Mode::Reversed => {
+                    print!("const char {}_gfx[{}] = {{", sprite.name, gfx.len());
+                    for c in 0..gfx.len() - 1 {
+                        print!("0x{:02x}, ", gfx[gfx.len() - 1 - c]);
+                    } 
+                    println!("0x{:02x}}};\n", gfx.first().unwrap());
+                    if sprite.color_copy.is_none() {
+                        // Check if colors contain different values
+                        let mut cs = colors.clone();
+                        cs.sort();
+                        cs.dedup();
+                        if cs.len() > 1 {
+                            print!("#ifdef PAL\nconst char {}_colors[{}] = {{", sprite.name, colors.len());
+                            for c in 0..colors.len() - 1 {
+                                let d = colors.len() - 1 - c;
+                                let color = (TO_PAL[(colors[d] >> 4) as usize] << 4) | (colors[d] & 0x0f);
+                                print!("0x{:02x}, ", color);
+                            } 
+                            println!("0x{:02x}}};", colors.first().unwrap());
+                            print!("#else\nconst char {}_colors[{}] = {{", sprite.name, colors.len());
+                            for c in 0..colors.len() - 1 {
+                                let d = colors.len() - 1 - c;
+                                print!("0x{:02x}, ", colors[d]);
+                            } 
+                            println!("0x{:02x}}};\n#endif", colors.first().unwrap());
+                        }
+                    }
                 }
-                sprites.push((sprite.name.clone(), sprite.name.clone(), gfx.len() as u8, sprite.color_offset));
-            }
+            } 
         }
-    } 
-    println!("#define MS_NB_SPRITES_DEF {}", sprites.len());
-    print!("MS_KERNEL_BANK aligned(256) const char *ms_grptr[MS_NB_SPRITES_DEF] = {{");
-    for (c, x) in sprites.iter().enumerate() {
-        if c != 0 { print!(", "); }
-        print!("{}_gfx", x.0);
     }
-    println!("}};");
-    if !one_color_sprites {
-        print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
+
+    if mode == Mode::Multisprite {
+        println!("#define MS_NB_SPRITES_DEF {}", sprites.len());
+        print!("MS_KERNEL_BANK aligned(256) const char *ms_grptr[MS_NB_SPRITES_DEF] = {{");
         for (c, x) in sprites.iter().enumerate() {
             if c != 0 { print!(", "); }
-            if let Some(offset) = x.3 {
-                print!("{}_colors + {offset}", x.1);
-            } else {
-                print!("{}_colors", x.1);
-            }
+            print!("{}_gfx", x.0);
         }
         println!("}};");
-    }
-    print!("MS_KERNEL_BANK const char ms_height[MS_NB_SPRITES_DEF] = {{");
-    for (c, x) in sprites.iter().enumerate() {
-        if c != 0 { print!(", "); }
-        print!("{}", x.2 + 3);
-    }
-    println!("}};");
-    for (c, x) in sprites.iter().enumerate() {
-        println!("#define SPRITE_{} {}", x.0.to_uppercase(), c);
+        if !one_color_sprites {
+            print!("MS_KERNEL_BANK const char *ms_coluptr[MS_NB_SPRITES_DEF] = {{");
+            for (c, x) in sprites.iter().enumerate() {
+                if c != 0 { print!(", "); }
+                if let Some(offset) = x.3 {
+                    print!("{}_colors + {offset}", x.1);
+                } else {
+                    print!("{}_colors", x.1);
+                }
+            }
+            println!("}};");
+        }
+        print!("MS_KERNEL_BANK const char ms_height[MS_NB_SPRITES_DEF] = {{");
+        for (c, x) in sprites.iter().enumerate() {
+            if c != 0 { print!(", "); }
+            print!("{}", x.2 + 3);
+        }
+        println!("}};");
+        for (c, x) in sprites.iter().enumerate() {
+            println!("#define SPRITE_{} {}", x.0.to_uppercase(), c);
+        }
     }
     Ok(())
 }
