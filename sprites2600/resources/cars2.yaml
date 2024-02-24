@@ -4,11 +4,11 @@ sprite_sheets:
       - name: ready_set_go 
         top: 24
         left: 0
-        height: 117
+        height: 126
       - name: last_lap 
         top: 24
         left: 8
-        height: 83
+        height: 92
       - name: first 
         top: 24
         left: 16
