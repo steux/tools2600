@@ -1,0 +1,35 @@
+sprite_sheets:
+  - image: cars.png
+    sprites:
+      - name: ready_set_go 
+        top: 24
+        left: 0
+        height: 117
+      - name: last_lap 
+        top: 24
+        left: 8
+        height: 83
+      - name: first 
+        top: 24
+        left: 16
+        height: 9
+      - name: second 
+        top: 24
+        left: 24
+        height: 9
+      - name: third 
+        top: 24
+        left: 32
+        height: 9
+      - name: fourth 
+        top: 24
+        left: 40
+        height: 9
+      - name: ok 
+        top: 24
+        left: 48
+        height: 9
+      - name: nok 
+        top: 24
+        left: 56
+        height: 9

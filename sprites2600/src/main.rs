@@ -99,7 +99,7 @@ fn main() -> Result<()> {
         }
         Mode::Multisprite
     } else if args.raw {
-        if args.raw || args.reversed {
+        if args.multisprite || args.reversed {
             return Err(anyhow!("multisprite, raw and reversed flags are exclusive"));
         }
         Mode::Raw
