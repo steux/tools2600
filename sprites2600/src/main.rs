@@ -45,10 +45,16 @@ struct Sprite {
     color_offset: Option<u8>,
     #[serde(default = "default_pixel_width")]
     pixel_width: u8,
+    #[serde(default = "default_aligned")]
+    aligned: bool,
 }
 
 fn default_pixel_width() -> u8 {
     1
+}
+
+fn default_aligned() -> bool {
+    false
 }
 
 const VCS_NTSC_PALETTE: [u8; 128 * 5] = [
@@ -215,11 +221,14 @@ fn main() -> Result<()> {
                     }
                 }
                 Mode::Raw => {
+                    if sprite.aligned {
+                        print!("aligned(256) ");
+                    }
                     print!("const char {}_gfx[{}] = {{", sprite.name, gfx.len());
                     for c in 0..gfx.len() - 1 {
                         print!("0x{:02x}, ", gfx[c]);
                     }
-                    println!("0x{:02x}}};\n", gfx.last().unwrap());
+                    println!("0x{:02x}}};", gfx.last().unwrap());
                     if sprite.color_copy.is_none() {
                         // Check if colors contain different values
                         let mut cs = colors.clone();
@@ -250,11 +259,14 @@ fn main() -> Result<()> {
                     }
                 }
                 Mode::Reversed => {
+                    if sprite.aligned {
+                        print!("aligned(256) ");
+                    }
                     print!("const char {}_gfx[{}] = {{", sprite.name, gfx.len());
                     for c in 0..gfx.len() - 1 {
                         print!("0x{:02x}, ", gfx[gfx.len() - 1 - c]);
                     }
-                    println!("0x{:02x}}};\n", gfx.first().unwrap());
+                    println!("0x{:02x}}};", gfx.first().unwrap());
                     if sprite.color_copy.is_none() {
                         // Check if colors contain different values
                         let mut cs = colors.clone();

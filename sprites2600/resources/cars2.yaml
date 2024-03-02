@@ -1,35 +1,42 @@
 sprite_sheets:
   - image: cars.png
     sprites:
-      - name: ready_set_go 
+      - name: ready_set_go
         top: 24
         left: 0
         height: 126
-      - name: last_lap 
-        top: 24
-        left: 8
-        height: 92
-      - name: first 
+        aligned: true
+      - name: first
         top: 24
         left: 16
         height: 9
-      - name: second 
+      - name: second
         top: 24
         left: 24
         height: 9
-      - name: third 
+      - name: third
         top: 24
         left: 32
         height: 9
-      - name: fourth 
+      - name: fourth
         top: 24
         left: 40
         height: 9
-      - name: ok 
+      - name: ok
         top: 24
         left: 48
         height: 9
-      - name: nok 
+      - name: nok
         top: 24
         left: 56
         height: 9
+      - name: last_lap
+        top: 24
+        left: 8
+        height: 92
+        aligned: true
+      - name: lap
+        top: 33
+        left: 16
+        height: 36
+        aligned: true
